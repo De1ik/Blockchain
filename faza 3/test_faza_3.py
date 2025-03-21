@@ -39,117 +39,152 @@ class HandleTxsTest(unittest.TestCase):
         blockchain = Blockchain(genesis_block)
         handle_blocks = HandleBlocks(blockchain)
 
-        # genesis_block.coinbase.get_hash()
-        utxo_pool = blockchain.get_utxo_pool_at_max_height()
-        # print('pool:', utxo_pool.get_tx_output(utxo_pool.get_all_utxo()[0]).deserialize_key(utxo_pool.get_tx_output(utxo_pool.get_all_utxo()[0]).address))
-        # print('genesis_block:', genesis_block.get_coinbase().get_outputs()[0].deserialize_key(utxo_pool.get_tx_output(utxo_pool.get_all_utxo()[0]).address))
-
         tx0 = Transaction()
+
         tx0.add_input(genesis_block.get_coinbase().get_hash(), 0)
         tx0.add_output(1, address=alice.public_key)
         data_to_sign = tx0.get_data_to_sign(0)
-        # print("Test_data_to_sign:", data_to_sign)
         signature = bob.sign(data_to_sign)
-        # print("TEst_Signature:", signature)
         tx0.add_signature(signature, 0)
         tx0.finalize()
-        # print("TEst_PBKEY:", (genesis_block.get_coinbase().get_outputs()[0].deserialize_key(genesis_block.get_coinbase().get_outputs()[0].address)).public_numbers())
-        #
 
-        if not blockchain.transaction_add(tx0):
-            print('was not added to the blockchain')
-        else:
-            print('blockchain has new tx')
-
-
-
-        print(blockchain.get_transaction_pool().get_transactions())
+        blockchain.transaction_add(tx0)
 
         block1 = Block(genesis_block.get_hash(), alice.public_key)
         block1.finalize()
-
         result = handle_blocks.block_process(block1)
-        print(result)
-        # #
-        # # utxo_pool = blockchain.get_utxo_pool_at_max_height()
-        # # spent_utxo = genesis_block.get_hash(), 0
-        # # new_utxo = tx0.get_hash(), 0
+
+        utxo_pool = blockchain.get_utxo_pool_at_max_height()
+        spent_utxo = UTXO(genesis_block.coinbase.get_hash(), 0)
+        new_utxo = UTXO(tx0.get_hash(), 0)
+
+        self.assertTrue(result, "Block with one valid transaction was processed successfully")
+        self.assertEqual(blockchain.get_block_at_max_height().block, block1, "Block must be the head of the blockchain")
+        self.assertIn(tx0, block1.get_transactions(), "Transaction must be in new block")
+        self.assertFalse(utxo_pool.contains(spent_utxo), "Used UTXO must be removed")
+        self.assertTrue(utxo_pool.contains(new_utxo), "New UTXO must be in new group")
+
+    def test_process_block_many_valid_transaction(self):
+        bob = RSAHelper()
+        alice = RSAHelper()
+        mark = RSAHelper()
+        dima = RSAHelper()
+        masha = RSAHelper()
+        artem = RSAHelper()
+
+        genesis_block = Block(None, bob.public_key)
+        genesis_block.finalize()
+        blockchain = Blockchain(genesis_block)
+        handle_blocks = HandleBlocks(blockchain)
+
+
+        tx0 = Transaction()
+        tx0.add_input(genesis_block.get_coinbase().get_hash(), 0)
+        tx0.add_output(0.5, address=alice.public_key)
+        tx0.add_output(0.5, address=mark.public_key)
+        tx0.add_output(0.5, address=dima.public_key)
+        tx0.add_output(0.5, address=masha.public_key)
+        tx0.add_output(0.5, address=masha.public_key)
+        data_to_sign = tx0.get_data_to_sign(0)
+        signature = bob.sign(data_to_sign)
+        tx0.add_signature(signature, 0)
+        tx0.finalize()
+
+        blockchain.transaction_add(tx0)
+
+        block1 = Block(genesis_block.get_hash(), alice.public_key)
+        block1.finalize()
+        result1 = handle_blocks.block_process(block1)
+
+
+        tx1 = Transaction()
+        tx1.add_input(tx0.get_hash(), 0)
+        tx1.add_output(0.5, address=artem.public_key)
+        data_to_sign = tx1.get_data_to_sign(0)
+        signature = alice.sign(data_to_sign)
+        tx1.add_signature(signature, 0)
+        tx1.finalize()
+
+        tx2 = Transaction()
+        tx2.add_input(tx0.get_hash(), 1)
+        tx2.add_output(0.5, address=artem.public_key)
+        data_to_sign = tx2.get_data_to_sign(0)
+        signature = mark.sign(data_to_sign)
+        tx2.add_signature(signature, 0)
+        tx2.finalize()
+
+        tx3 = Transaction()
+        tx3.add_input(tx0.get_hash(), 2)
+        tx3.add_output(0.5, address=artem.public_key)
+        data_to_sign = tx3.get_data_to_sign(0)
+        signature = dima.sign(data_to_sign)
+        tx3.add_signature(signature, 0)
+        tx3.finalize()
+
+        tx4 = Transaction()
+        tx4.add_input(tx0.get_hash(), 3)
+        tx4.add_input(tx0.get_hash(), 4)
+        tx4.add_output(1.0, address=artem.public_key)
+        data_to_sign = tx4.get_data_to_sign(0)
+        signature = masha.sign(data_to_sign)
+        tx4.add_signature(signature, 0)
+        data_to_sign_1 = tx4.get_data_to_sign(1)
+        signature_1 = masha.sign(data_to_sign_1)
+        tx4.add_signature(signature_1, 1)
+        tx4.finalize()
+
+
+        blockchain.transaction_add(tx1)
+        blockchain.transaction_add(tx2)
+        blockchain.transaction_add(tx3)
+        blockchain.transaction_add(tx4)
+
+        block2 = Block(block1.get_hash(), alice.public_key)
+        block2.finalize()
+        result2 = handle_blocks.block_process(block2)
+
+        # tx5 = Transaction()
+        # tx5.add_input(tx1.get_hash(), 0) #0.5
+        # tx5.add_input(tx2.get_hash(), 0) #0.5
+        # tx5.add_input(tx3.get_hash(), 0) #0.5
+        # tx5.add_input(tx4.get_hash(), 0) #1.0
+        # tx5.add_output(2.5, address=alice.public_key)
         #
-        # print(block1.get_transactions())
+        # data_to_sign = tx5.get_data_to_sign(0)
+        # signature = artem.sign(data_to_sign)
+        # tx5.add_signature(signature, 0)
+        #
+        # data_to_sign = tx5.get_data_to_sign(1)
+        # signature = artem.sign(data_to_sign)
+        # tx5.add_signature(signature, 1)
+        #
+        # data_to_sign = tx5.get_data_to_sign(2)
+        # signature = artem.sign(data_to_sign)
+        # tx5.add_signature(signature, 2)
+        #
+        # data_to_sign = tx5.get_data_to_sign(3)
+        # signature = artem.sign(data_to_sign)
+        # tx5.add_signature(signature, 3)
+        #
+        # tx5.finalize()
+        #
+        # blockchain.transaction_add(tx5)
+        #
+        # block3 = Block(block2.get_hash(), alice.public_key)
+        # block3.finalize()
+        # result3 = handle_blocks.block_process(block3)
 
-        # self.assertTrue(result, "Block without transaction was processed successfully")
-        # self.assertEqual(blockchain.get_block_at_max_height().block, block1, "Block must be the head of the blockchain")
-        # self.assertIn(tx0, block1.get_transactions(), "Транзакция должна быть в новом блоке")
-        # self.assertFalse(utxo_pool.contains(spent_utxo), "Потраченный UTXO должен исчезнуть из пула")
-        # self.assertTrue(utxo_pool.contains(new_utxo), "Новый UTXO должен появиться в пуле")
 
+        self.assertTrue(result1, "Block1 with tx0 must be processed successfully")
+        self.assertTrue(result2, "Block 2 with tx1-tx4 must be accepted")
+        # self.assertTrue(result3, "Block 3 with tx1-tx4 must be accepted")
+        self.assertEqual(blockchain.get_block_at_max_height().block, block2, "Block 2 should be the top of the chain")
 
-    # def test_tx_validator_with_valid_transaction(self):
-    #     # 1. Create an empty UTXOPool.
-    #     pool = UTXOPool()
-    #
-    #     # 2. Create a key pair.
-    #     rsa_helper = RSAHelper()
-    #     rsa_helper_1 = RSAHelper()
-    #     rsa_helper_2 = RSAHelper()
-    #     rsa_helper_3 = RSAHelper()
-    #
-    #     rsa_helper_x = RSAHelper()
-    #
-    #     # 3. Create a base transaction (tx0) that produces an output worth 10 coins.
-    #     tx0 = Transaction()
-    #     tx0.add_output(5.0, rsa_helper.public_key)
-    #     tx0.finalize()
-    #
-    #     # 4. Insert tx0’s output into the UTXOPool.
-    #     utxo0 = UTXO(tx0.get_hash(), 0)
-    #     pool.add_utxo(utxo0, tx0.get_output(0))
-    #
-    #     # 5. Create a new transaction (tx1) that spends tx0's output.
-    #     tx1 = Transaction()
-    #     tx1.add_input(tx0.get_hash(), 0)
-    #     tx1.add_output(5.0, multisig_keys = [rsa_helper_1.public_key, rsa_helper_2.public_key, rsa_helper_3.public_key], required=3)
-    #     data_to_sign = tx1.get_data_to_sign(0)
-    #     signature = rsa_helper.sign(data_to_sign)
-    #     tx1.add_signature(signature, 0)
-    #     tx1.finalize()
-    #
-    #     utxo0 = UTXO(tx1.get_hash(), 0)
-    #     pool.add_utxo(utxo0, tx1.get_output(0))
-    #
-    #     tx2 = Transaction()
-    #     tx2.add_input(tx1.get_hash(), 0)
-    #     tx2.add_output(5.0, address=rsa_helper.public_key)
-    #
-    #     data_to_sign = tx2.get_data_to_sign(0)
-    #
-    #     signature1 = rsa_helper_1.sign(data_to_sign)
-    #     tx2.add_signature(signature1, 0)
-    #
-    #     signature2 = rsa_helper_2.sign(data_to_sign)
-    #     tx2.add_signature(signature2, 0)
-    #
-    #     signature3 = rsa_helper_3.sign(data_to_sign)
-    #     tx2.add_signature(signature3, 0)
-    #
-    #     tx2.finalize()
-    #
-    #     utxo0 = UTXO(tx2.get_hash(), 0)
-    #     pool.add_utxo(utxo0, tx2.get_output(0))
-    #
-    #
-    #     tx3 = Transaction()
-    #     tx3.add_input(tx2.get_hash(), 0)
-    #     tx3.add_output(5.0, address=rsa_helper_x.public_key)
-    #
-    #     data_to_sign = tx3.get_data_to_sign(0)
-    #
-    #     signature = rsa_helper.sign(data_to_sign)
-    #     tx3.add_signature(signature, 0)
-    #     tx3.finalize()
-    #
-    #
-    #     # 6. Create the handler and validate the transaction.
-    #     handler = HandleTxs(pool)
-    #     valid = handler.txIsValid(tx3)
-    #     self.assertTrue(valid, "Transaction tx1 should be valid with properly signed inputs and valid UTXOs.")
+        utxo_pool = blockchain.get_utxo_pool_at_max_height()
+        spent_utxo = UTXO(genesis_block.get_coinbase().get_hash(), 0)
+
+        self.assertFalse(utxo_pool.contains(spent_utxo), "UTXO from Genesis needs to be spent")
+        self.assertFalse(utxo_pool.contains(UTXO(tx0.get_hash(), 2)), f"The output 1 of tx0 must be spent")
+
+        for i in range(4):
+            self.assertFalse(utxo_pool.contains(UTXO(tx0.get_hash(), i)), f"The output {i} of tx0 must be spent")

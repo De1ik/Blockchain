@@ -24,7 +24,11 @@ class Blockchain:
                 parent.children.append(self)
 
         def get_utxo_pool_copy(self):
-            return copy.deepcopy(self.utxo_pool)
+            new_pool = UTXOPool()
+            for utxo in self.utxo_pool.get_all_utxo():
+                tx_output = self.utxo_pool.get_tx_output(utxo)
+                new_pool.add_utxo(utxo, tx_output)
+            return new_pool
 
     """    /**
      * vytvor prázdny blockchain iba s prvým (Genesis) blokom. Predpokladajme, že
@@ -95,17 +99,12 @@ class Blockchain:
             utxo_pool = parent_node.get_utxo_pool_copy()
             coinbase_tx = blockNode.block.get_coinbase()
             block_txs = self.tx_pool_dict.get_transactions()
-            print(self.tx_pool_dict.get_transactions())
 
             block.txs.extend(block_txs)
-            print("Block:", block.get_transactions())
             # process all txs, if txs is invalid then it will raise the error
             txs_handler = HandleTxs(utxo_pool)
             res = txs_handler.handler([coinbase_tx])
-            print("RES:", res)
-            print("Coinbase:", coinbase_tx)
             res2 = txs_handler.handler(block_txs)
-            print("RES2:", res2)
 
             new_utxo_pool = txs_handler.UTXOPoolGet()
             blockNode.utxo_pool = new_utxo_pool
@@ -135,11 +134,9 @@ class Blockchain:
         blockNode = self.BlockNode(genesis_block, parent=None, utxo_pool=None)
 
         # get all txs of the block
-        utxo_pool = copy.deepcopy(self.utxo_pool)
+        utxo_pool = self.utxo_pool
         coinbase_tx = blockNode.block.get_coinbase()
         block_txs = blockNode.block.get_transactions()
-
-
 
 
         # process all txs, if txs is invalid then it will raise the error
@@ -155,7 +152,8 @@ class Blockchain:
         self.head_blocks[genesis_block.get_hash()] = blockNode
 
         self.newest_block_node = blockNode
-        self.utxo_pool = blockNode.get_utxo_pool_copy()
+        # self.utxo_pool = blockNode.get_utxo_pool_copy()
+        self.utxo_pool = blockNode.utxo_pool
 
         self.remove_confirmed_transactions(block_txs)
 
@@ -166,7 +164,8 @@ class Blockchain:
             return False
 
         if not HandleTxs.txIsValid(tx, self.utxo_pool):
-            print('esrgfewfdbg')
+            print('NOT VALID')
+            raise Exception
             return False
 
 
@@ -176,4 +175,4 @@ class Blockchain:
 
     def remove_confirmed_transactions(self, block_txs):
         for tx in block_txs:
-            self.tx_pool_dict.remove_transaction(tx)
+            self.tx_pool_dict.remove_transaction(tx.get_hash())

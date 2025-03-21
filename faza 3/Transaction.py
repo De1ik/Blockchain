@@ -36,12 +36,12 @@ class Transaction:
             self.required = required
 
             if self.multisig_keys is not None and addr is None:
-                self.address = self.serialize_key(self.create_multisig_addr())
-            elif addr is not None:
-                print("SER")
-                self.address = self.serialize_key(addr)
+                # self.address = self.serialize_key(self.create_multisig_addr())
+                self.address = self.create_multisig_addr()
+            # elif addr is not None:
+            #     print("SER")
+            #     self.address = self.serialize_key(addr)
             else:
-                print('ELSE')
                 self.address = addr
 
         def create_multisig_addr(self):
@@ -64,11 +64,16 @@ class Transaction:
             if not isinstance(other, Transaction.Output):
                 return False
             return (self.value == other.value and
-                    self.deserialize_key(self.address).e == self.deserialize_key(other.address).e and
-                    self.deserialize_key(self.address).n == self.deserialize_key(other.address).n)
+                    # self.deserialize_key(self.address).e == self.deserialize_key(other.address).e and
+                    # self.deserialize_key(self.address).n == self.deserialize_key(other.address).n)
+
+                    self.address.e == other.address.e and
+                    self.address.n == other.address.n)
 
         def __hash__(self):
-            return hash((round(self.value * 10000), self.deserialize_key(self.address).e, self.deserialize_key(self.address).n))
+            # return hash((round(self.value * 10000), self.deserialize_key(self.address).e, self.deserialize_key(self.address).n))
+            return hash((round(self.value * 10000), self.address.e, self.address.n))
+
 
 
     def __init__(self, tx=None, coin=None, address=None):
@@ -78,13 +83,14 @@ class Transaction:
             self.outputs = tx.outputs.copy()
             self.coinbase = False
         elif coin is not None and address is not None:
+            print("Coinbase transaction created")
             self.coinbase = True
             self.inputs = []
             self.outputs = []
             self.add_output(coin, address)
             self.finalize()
-            self.hash = None
         elif tx is None:
+            print("Basic transaction created")
             self.inputs = []
             self.outputs = []
             self.coinbase = False
@@ -125,7 +131,8 @@ class Transaction:
         for op in self.outputs:
             value_bytes = struct.pack('>d', op.value)  # big-endian double
 
-            public_numbers = RSAHelper.deserialize_pb_key(op.address).public_numbers()
+            # public_numbers = RSAHelper.deserialize_pb_key(op.address).public_numbers()
+            public_numbers = op.address.public_numbers()
             address_exponent = public_numbers.e.to_bytes((public_numbers.e.bit_length() + 7) // 8, byteorder='big')
             address_modulus = public_numbers.n.to_bytes((public_numbers.n.bit_length() + 7) // 8, byteorder='big')
 
@@ -156,7 +163,8 @@ class Transaction:
         for op in self.outputs:
             value_bytes = struct.pack('>d', op.value)  # big-endian double
 
-            public_numbers = RSAHelper.deserialize_pb_key(op.address).public_numbers()
+            # public_numbers = RSAHelper.deserialize_pb_key(op.address).public_numbers()
+            public_numbers = op.address.public_numbers()
             address_exponent = public_numbers.e.to_bytes((public_numbers.e.bit_length() + 7) // 8, byteorder='big')
             address_modulus = public_numbers.n.to_bytes((public_numbers.n.bit_length() + 7) // 8, byteorder='big')
 

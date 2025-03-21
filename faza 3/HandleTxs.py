@@ -47,17 +47,16 @@ class HandleTxs:
                 return False
             if op[0].value < 0:
                 return False
-            # print('TRUE')
             return True
 
 
         for inpt in tx.get_inputs():
             utxo = UTXO.UTXO(inpt.prevTxHash, inpt.outputIndex)
+
             tx_output = utxo_pool.get_tx_output(utxo)
             if not utxo_pool.contains(utxo):
                 return False
             message = tx.get_data_to_sign(index)
-            # print("Handler_data_to_sign:", message)
             index+=1
 
             if tx_output.is_multisig:
@@ -75,9 +74,7 @@ class HandleTxs:
                 if not inpt.signatures:
                     return False
                 signature = inpt.signatures[0]
-                # print("Handler_Signature:", signature)
-                addr = RSAHelper.deserialize_pb_key(tx_output.address)
-                # print("Handler_PBKEY:", addr.public_numbers())
+                addr = tx_output.address
 
 
                 if signature is None or not RSAHelper.verify(addr, message, signature):
@@ -95,6 +92,9 @@ class HandleTxs:
                 return False
             op_val += op.value
 
+        print("OP:", op_val)
+        print("INP:", inp_val)
+
         if inp_val < op_val:
             return False
 
@@ -111,16 +111,14 @@ class HandleTxs:
 
         valid_txs = []
 
+
         for tx in possible_txs:
             if HandleTxs.txIsValid(tx, utxo_pool=self.utxo_pool):
                 if tx.is_coinbase():
                     utxo0 = UTXO.UTXO(tx.get_hash(), 0)
-                    print("handle provide")
                     self.utxo_pool.add_utxo(utxo0, tx.get_output(0))
-                    print("AFTER")
                     valid_txs.append(tx)
                     return valid_txs
-
                 valid_txs.append(tx)
                 index = 0
 
@@ -130,7 +128,6 @@ class HandleTxs:
                         self.utxo_pool.remove_utxo(used_utxo)
 
                 for op in tx.get_outputs():
-                    print('TEST des')
                     hash_tx = tx.get_hash()
                     new_utxo = UTXO.UTXO(hash_tx, index)
                     if not self.utxo_pool.contains(new_utxo):
