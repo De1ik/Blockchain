@@ -35,6 +35,8 @@ class Block:
             raw_block.extend(self.prev_block_hash)
         for tx in self.txs:
             raw_block.extend(tx.get_tx())
+
+        raw_block.extend(self.coinbase.get_tx())
         return bytes(raw_block)
 
     def finalize(self):

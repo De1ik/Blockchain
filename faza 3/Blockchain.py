@@ -41,6 +41,7 @@ class Blockchain:
         self.newest_block_node = None
         self.utxo_pool = UTXOPool()
         self.tx_pool_dict = TransactionPool()
+        self.tx_pool_utxo = set()
         # forks
         self.head_blocks = {}
 
@@ -103,26 +104,32 @@ class Blockchain:
             block.txs.extend(block_txs)
             # process all txs, if txs is invalid then it will raise the error
             txs_handler = HandleTxs(utxo_pool)
-            res = txs_handler.handler([coinbase_tx])
-            res2 = txs_handler.handler(block_txs)
+            txs_handler.handler([coinbase_tx])
+            valid_txs, invalid_txs = txs_handler.handler(block_txs)
 
-            new_utxo_pool = txs_handler.UTXOPoolGet()
-            blockNode.utxo_pool = new_utxo_pool
+            if not invalid_txs:
+                new_utxo_pool = txs_handler.UTXOPoolGet()
+                blockNode.utxo_pool = new_utxo_pool
 
-            # update blockchain anf head of branches
-            self.blockchain_dict[block.get_hash()] = blockNode
-            self.head_blocks[block.get_hash()] = blockNode
+                # update blockchain anf head of branches
+                self.blockchain_dict[block.get_hash()] = blockNode
 
-            # del the prev block from the head of the branches
-            if parent_hash in self.head_blocks:
-                del self.head_blocks[parent_hash]
+                self.head_blocks[block.get_hash()] = blockNode
+                # del the prev block from the head of the branches
+                if parent_hash in self.head_blocks:
+                    del self.head_blocks[parent_hash]
 
-            # update the highest block
-            if blockNode.height > self.newest_block_node.height:
-                self.newest_block_node = blockNode
-                self.utxo_pool = blockNode.get_utxo_pool_copy()
+                # update the highest block
+                if blockNode.height > self.newest_block_node.height:
+                    self.newest_block_node = blockNode
+                    self.utxo_pool = blockNode.get_utxo_pool_copy()
 
-            self.remove_confirmed_transactions(block_txs)
+                self.remove_confirmed_transactions(block_txs)
+            else:
+                self.remove_confirmed_transactions(invalid_txs)
+                print('Block had the invalid tx and was not added')
+                print('All valid tx go back to the pool')
+                print('Ivalid tx was removed from the pool')
 
         except Exception as e:
             print(e)
@@ -163,14 +170,24 @@ class Blockchain:
         if tx in self.tx_pool_dict.get_transactions():
             return False
 
-        if not HandleTxs.txIsValid(tx, self.utxo_pool):
-            print('NOT VALID')
-            raise Exception
+        if not HandleTxs.txIsValid(tx, self.utxo_pool, self.tx_pool_utxo):
             return False
 
+        if not tx.is_coinbase():
+            self.add_to_tx_pool_utxo(tx)
 
         self.tx_pool_dict.add_transaction(tx)
         return True
+
+    def add_to_tx_pool_utxo(self, tx):
+        for inpt in tx.get_inputs():
+            utxo = UTXO(inpt.prevTxHash, inpt.outputIndex)
+            self.tx_pool_utxo.add(utxo)
+
+    def remove_from_tx_pool_utxo(self, tx):
+        for inpt in tx.get_inputs():
+            utxo = UTXO(inpt.prevTxHash, inpt.outputIndex)
+            self.tx_pool_utxo.add(utxo)
 
 
     def remove_confirmed_transactions(self, block_txs):

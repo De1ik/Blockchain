@@ -24,7 +24,7 @@ class HandleTxs:
         return UTXOPool.UTXOPool()
 
     @staticmethod
-    def txIsValid(tx, utxo_pool):
+    def txIsValid(tx, utxo_pool, tx_pool_utxo):
         # IMPLEMENTOVAŤ
         """
         @return true, ak
@@ -56,6 +56,10 @@ class HandleTxs:
             tx_output = utxo_pool.get_tx_output(utxo)
             if not utxo_pool.contains(utxo):
                 return False
+
+            if tx_pool_utxo is not None and utxo in tx_pool_utxo:
+                return False
+
             message = tx.get_data_to_sign(index)
             index+=1
 
@@ -101,7 +105,7 @@ class HandleTxs:
 
         return True
 
-    def handler(self, possible_txs):
+    def handler(self, possible_txs, tx_pool_utxo=None):
         # IMPLEMENTOVAŤ
         """
         Spracováva každú epochu (iteráciu) prijímaním neusporiadaného radu navrhovaných
@@ -110,10 +114,10 @@ class HandleTxs:
         """
 
         valid_txs = []
-
+        invalid_txs = []
 
         for tx in possible_txs:
-            if HandleTxs.txIsValid(tx, utxo_pool=self.utxo_pool):
+            if HandleTxs.txIsValid(tx, utxo_pool=self.utxo_pool, tx_pool_utxo=tx_pool_utxo):
                 if tx.is_coinbase():
                     utxo0 = UTXO.UTXO(tx.get_hash(), 0)
                     self.utxo_pool.add_utxo(utxo0, tx.get_output(0))
@@ -124,6 +128,10 @@ class HandleTxs:
 
                 for inp in tx.get_inputs():
                     used_utxo = UTXO.UTXO(inp.prevTxHash, inp.outputIndex)
+
+                    if tx_pool_utxo is not None and used_utxo in tx_pool_utxo:
+                        tx_pool_utxo.remove(used_utxo)
+
                     if self.utxo_pool.contains(used_utxo):
                         self.utxo_pool.remove_utxo(used_utxo)
 
@@ -134,6 +142,11 @@ class HandleTxs:
                         self.utxo_pool.add_utxo(new_utxo, op)
                     index += 1
             else:
-                raise Exception("Tx is not valid")
+                for inp in tx.get_inputs():
+                    used_utxo = UTXO.UTXO(inp.prevTxHash, inp.outputIndex)
+                    if tx_pool_utxo is not None and used_utxo in tx_pool_utxo:
+                        tx_pool_utxo.remove(used_utxo)
+                invalid_txs.append(tx)
+                return valid_txs, invalid_txs
 
-        return valid_txs
+        return valid_txs, invalid_txs
