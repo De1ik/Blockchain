@@ -120,10 +120,8 @@ class Blockchain:
                 self.blockchain_dict[block.get_hash()] = blockNode
 
                 self.head_blocks[block.get_hash()] = blockNode
-                print("WAS ADDED")
                 # del the prev block from the head of the branches
                 if parent_hash in self.head_blocks:
-                    print("WAS REMOVED")
                     del self.head_blocks[parent_hash]
 
                 # update the highest block
@@ -136,7 +134,6 @@ class Blockchain:
                 # self.remove_confirmed_transactions(invalid_txs)
                 print('Block had the invalid tx and was not added')
                 print('All valid tx go back to the pool')
-                print('Ivalid tx was removed from the pool')
                 return False
 
         except Exception as e:

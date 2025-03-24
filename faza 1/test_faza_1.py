@@ -8,7 +8,7 @@ from MaxFeeHandleTxs import MaxFeeHandleTxs
 
 
 class HandleTxsTest(unittest.TestCase):
-
+    # 1
     def test_tx_validator_with_valid_transaction(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -42,7 +42,7 @@ class HandleTxsTest(unittest.TestCase):
         valid = handler.txIsValid(tx1)
         self.assertTrue(valid, "Transaction tx1 should be valid with properly signed inputs and valid UTXOs.")
 
-
+    # 2
     def test_tx_validator_with_incorrect_signature(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -79,7 +79,7 @@ class HandleTxsTest(unittest.TestCase):
         valid = handler.txIsValid(tx1)
         self.assertFalse(valid, "Transaction tx1 should be invalid because of the invalid signature.")
 
-
+    # 3
     def test_tx_validator_with_incorrect_private_key(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -115,7 +115,7 @@ class HandleTxsTest(unittest.TestCase):
         valid = handler.txIsValid(tx1)
         self.assertFalse(valid, "Transaction tx1 should be invalid because it was sign with another private key.")
 
-
+    # 4
     def test_tx_validator_input_less_output(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -149,7 +149,7 @@ class HandleTxsTest(unittest.TestCase):
         valid = handler.txIsValid(tx1)
         self.assertFalse(valid, "Transaction tx1 should be invalid because it try to spend more than was received.")
 
-
+    # 5
     def test_tx_validator_output_out_utx_pool(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -185,7 +185,7 @@ class HandleTxsTest(unittest.TestCase):
         valid = handler.txIsValid(tx1)
         self.assertFalse(valid, "Transaction tx1 should be invalid because it try to spend UTXO which is not in the pool.")
 
-
+    # 6
     def test_tx_validator_double_spending(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -223,7 +223,7 @@ class HandleTxsTest(unittest.TestCase):
         valid = handler.txIsValid(tx1)
         self.assertFalse(valid, "Transaction tx1 should be invalid because of the usage the same UTXO more than one time.")
 
-
+    # 7
     def test_tx_validator_negative_output(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -259,7 +259,7 @@ class HandleTxsTest(unittest.TestCase):
         valid = handler.txIsValid(tx1)
         self.assertFalse(valid, "Transaction tx1 should be invalid because of the negative output.")
 
-
+    # 8
     def test_tx_handler_all_valid_txs(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -333,7 +333,7 @@ class HandleTxsTest(unittest.TestCase):
         for i in range(len(expected_hashes)):
             self.assertEqual(received_hashes[i], received_hashes[i], "List of transactions should be valid.")
 
-
+    # 9
     def test_tx_handler_invalid_due_signature(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -408,7 +408,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
 
-
+    # 10
     def test_tx_handler_invalid_due_inp_op(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -469,7 +469,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
 
-
+    # 11
     def test_tx_handler_invalid_due_double_spending(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -533,7 +533,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
 
-
+    # 12
     def test_tx_handler_valid_depend_tx(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -602,7 +602,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
 
-
+    # 13
     def test_tx_handler_invalid_due_notexist_utxo(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -665,7 +665,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
 
-
+    # 14
     def test_tx_handler_valid_complex_tx(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()
@@ -768,7 +768,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
 
-
+    # 15
     def test_tx_handler_valid_repeated_tx(self):
         pool = UTXOPool()
         all_txs = []
@@ -831,7 +831,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
 
-
+    # 16
     def test_tx_handlerTXS_simple_valid_txs(self):
         pool = UTXOPool()
         all_txs = []
@@ -901,7 +901,7 @@ class HandleTxsTest(unittest.TestCase):
         for i in range(len(expected_hashes)):
             self.assertEqual(received_hashes[i], received_hashes[i], "List of transactions should be valid.")
 
-
+    # 17
     def test_tx_handlerTXS_simple_valid_2_output(self):
         pool = UTXOPool()
         all_txs = []
@@ -971,7 +971,7 @@ class HandleTxsTest(unittest.TestCase):
         for i in range(len(expected_hashes)):
             self.assertEqual(received_hashes[i], received_hashes[i], "List of transactions should be valid.")
 
-
+    # 18
     def test_tx_handlerTXS_valid_invalid_complex_2(self):
         # 1. Create an empty UTXOPool.
         pool = UTXOPool()

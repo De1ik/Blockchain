@@ -36,12 +36,7 @@ class Transaction:
             self.required = required
 
             if self.multisig_keys is not None and addr is None:
-                # self.address = self.serialize_key(self.create_multisig_addr())
-                print("IT IS MULTISIG, CREATE address")
                 self.address = self.create_multisig_addr()
-            # elif addr is not None:
-            #     print("SER")
-            #     self.address = self.serialize_key(addr)
             else:
                 self.address = addr
 
@@ -65,8 +60,6 @@ class Transaction:
             if not isinstance(other, Transaction.Output):
                 return False
             return (self.value == other.value and
-                    # self.deserialize_key(self.address).e == self.deserialize_key(other.address).e and
-                    # self.deserialize_key(self.address).n == self.deserialize_key(other.address).n)
 
                     self.address.e == other.address.e and
                     self.address.n == other.address.n)
@@ -84,14 +77,12 @@ class Transaction:
             self.outputs = tx.outputs.copy()
             self.coinbase = False
         elif coin is not None and address is not None:
-            print("Coinbase transaction created")
             self.coinbase = True
             self.inputs = []
             self.outputs = []
             self.add_output(coin, address)
             self.finalize()
         elif tx is None:
-            print("Basic transaction created")
             self.inputs = []
             self.outputs = []
             self.coinbase = False

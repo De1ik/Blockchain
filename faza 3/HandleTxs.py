@@ -64,15 +64,11 @@ class HandleTxs:
             index+=1
 
             if tx_output.is_multisig:
-                print("It is multisig Tx")
                 signatures = inpt.signatures
                 multisig_keys = tx_output.multisig_keys
                 required = tx_output.required
                 if not RSAHelper.verify_multisig(multisig_keys, message, signatures, required):
-                    print("INVALID multisig Tx")
                     return False
-                else:
-                    print("CORRECT multisig Tx")
 
             else:
                 if not inpt.signatures:
@@ -96,14 +92,12 @@ class HandleTxs:
                 return False
             op_val += op.value
 
-        print("OP:", op_val)
-        print("INP:", inp_val)
-
         if inp_val < op_val:
             return False
 
 
         return True
+
 
     def handler(self, possible_txs, tx_pool_utxo=None):
         # IMPLEMENTOVAŤ

@@ -1,11 +1,8 @@
 import unittest
-from importlib import invalidate_caches
 
 from RSA import RSAHelper
 from Transaction import Transaction
 from UTXO import UTXO
-from UTXOPool import UTXOPool
-from HandleTxs import HandleTxs
 
 from Block import Block
 from Blockchain import Blockchain
@@ -14,7 +11,7 @@ from HandleBlocks import HandleBlocks
 
 
 class HandleTxsTest(unittest.TestCase):
-
+    # 1
     def test_process_block_without_transaction(self):
         bob = RSAHelper()
         alice = RSAHelper()
@@ -27,11 +24,12 @@ class HandleTxsTest(unittest.TestCase):
         block1 = Block(genesis_block.get_hash(), alice.public_key)
         block1.finalize()
 
-        result = handle_blocks.block_process(block1)
+        is_block1_added = handle_blocks.block_process(block1)
 
-        self.assertTrue(result, "Block without transaction was processed successfully")
+        self.assertTrue(is_block1_added, "Block without transaction was processed successfully")
         self.assertEqual(blockchain.get_block_at_max_height().block, block1, "Block must be the head of the blockchain")
 
+    # 2
     def test_process_block_one_valid_transaction(self):
         bob = RSAHelper()
         alice = RSAHelper()
@@ -54,18 +52,19 @@ class HandleTxsTest(unittest.TestCase):
 
         block1 = Block(genesis_block.get_hash(), alice.public_key)
         block1.finalize()
-        result = handle_blocks.block_process(block1)
+        is_block1_added = handle_blocks.block_process(block1)
 
         utxo_pool = blockchain.get_utxo_pool_at_max_height()
         spent_utxo = UTXO(genesis_block.coinbase.get_hash(), 0)
         new_utxo = UTXO(tx0.get_hash(), 0)
 
-        self.assertTrue(result, "Block with one valid transaction was processed successfully")
+        self.assertTrue(is_block1_added, "Block with one valid transaction was processed successfully")
         self.assertEqual(blockchain.get_block_at_max_height().block, block1, "Block must be the head of the blockchain")
         self.assertIn(tx0, block1.get_transactions(), "Transaction must be in new block")
         self.assertFalse(utxo_pool.contains(spent_utxo), "Used UTXO must be removed")
         self.assertTrue(utxo_pool.contains(new_utxo), "New UTXO must be in new group")
 
+    # 3
     def test_process_block_many_valid_transaction(self):
         bob = RSAHelper()
         alice = RSAHelper()
@@ -96,7 +95,7 @@ class HandleTxsTest(unittest.TestCase):
 
         block1 = Block(genesis_block.get_hash(), alice.public_key)
         block1.finalize()
-        result1 = handle_blocks.block_process(block1)
+        is_block1_added = handle_blocks.block_process(block1)
 
 
         tx1 = Transaction()
@@ -143,43 +142,10 @@ class HandleTxsTest(unittest.TestCase):
 
         block2 = Block(block1.get_hash(), alice.public_key)
         block2.finalize()
-        result2 = handle_blocks.block_process(block2)
+        is_block2_added = handle_blocks.block_process(block2)
 
-        # tx5 = Transaction()
-        # tx5.add_input(tx1.get_hash(), 0) #0.5
-        # tx5.add_input(tx2.get_hash(), 0) #0.5
-        # tx5.add_input(tx3.get_hash(), 0) #0.5
-        # tx5.add_input(tx4.get_hash(), 0) #1.0
-        # tx5.add_output(2.5, address=alice.public_key)
-        #
-        # data_to_sign = tx5.get_data_to_sign(0)
-        # signature = artem.sign(data_to_sign)
-        # tx5.add_signature(signature, 0)
-        #
-        # data_to_sign = tx5.get_data_to_sign(1)
-        # signature = artem.sign(data_to_sign)
-        # tx5.add_signature(signature, 1)
-        #
-        # data_to_sign = tx5.get_data_to_sign(2)
-        # signature = artem.sign(data_to_sign)
-        # tx5.add_signature(signature, 2)
-        #
-        # data_to_sign = tx5.get_data_to_sign(3)
-        # signature = artem.sign(data_to_sign)
-        # tx5.add_signature(signature, 3)
-        #
-        # tx5.finalize()
-        #
-        # blockchain.transaction_add(tx5)
-        #
-        # block3 = Block(block2.get_hash(), alice.public_key)
-        # block3.finalize()
-        # result3 = handle_blocks.block_process(block3)
-
-
-        self.assertTrue(result1, "Block1 with tx0 must be processed successfully")
-        self.assertTrue(result2, "Block 2 with tx1-tx4 must be accepted")
-        # self.assertTrue(result3, "Block 3 with tx1-tx4 must be accepted")
+        self.assertTrue(is_block1_added, "Block1 with tx0 must be processed successfully")
+        self.assertTrue(is_block2_added, "Block 2 with tx1-tx4 must be accepted")
         self.assertEqual(blockchain.get_block_at_max_height().block, block2, "Block 2 should be the top of the chain")
 
         utxo_pool = blockchain.get_utxo_pool_at_max_height()
@@ -191,16 +157,15 @@ class HandleTxsTest(unittest.TestCase):
         for i in range(4):
             self.assertFalse(utxo_pool.contains(UTXO(tx0.get_hash(), i)), f"The output {i} of tx0 must be spent")
 
+    # 4
     def test_process_block_double_spend_transaction(self):
         bob = RSAHelper()
         alice = RSAHelper()
-
 
         genesis_block = Block(None, bob.public_key)
         genesis_block.finalize()
         blockchain = Blockchain(genesis_block)
         handle_blocks = HandleBlocks(blockchain)
-
 
         tx0 = Transaction()
         tx0.add_input(genesis_block.get_coinbase().get_hash(), 0)
@@ -239,6 +204,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertTrue(tx0 in blockchain.get_block_at_max_height().block.get_transactions(),  "TX0 must be in the list of valid transactions")
         self.assertFalse(tx1 in blockchain.get_block_at_max_height().block.get_transactions(),  "TX1 can not be in the list of valid transactions")
 
+    # 5
     def test_process_block_new_genesis(self):
         bob = RSAHelper()
 
@@ -250,11 +216,12 @@ class HandleTxsTest(unittest.TestCase):
         new_genesis_block = Block(None, bob.public_key)
         new_genesis_block.finalize()
 
-        result = handle_blocks.block_process(new_genesis_block)
+        is_new_genesis_added = handle_blocks.block_process(new_genesis_block)
 
-        self.assertFalse(result, "New genesis blck can not be processed successfully")
-        self.assertEqual(blockchain.get_block_at_max_height().block, genesis_block, "Genesis block must be the head of the blockchain")
+        self.assertFalse(is_new_genesis_added, "New genesis block can not be processed successfully")
+        self.assertEqual(blockchain.get_block_at_max_height().block, genesis_block, "First genesis block must be the head of the blockchain")
 
+    # 6
     def test_process_block_invalid_prev_hash(self):
         bob = RSAHelper()
         alice = RSAHelper()
@@ -276,6 +243,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertFalse(is_block1_added, "Block1 with incorrect prev hash can not be processed successfully")
         self.assertEqual(blockchain.get_block_at_max_height().block, genesis_block, "Genesis block must remain the head of the blockchain")
 
+    # 7
     def test_process_block_different_invalid_transaction(self):
         bob = RSAHelper()
         alice = RSAHelper()
@@ -345,7 +313,6 @@ class HandleTxsTest(unittest.TestCase):
         tx4.finalize()
 
 
-
         blockchain.transaction_add(tx0) # invalid signature
         blockchain.transaction_add(tx1) # invalid output
         blockchain.transaction_add(tx2) # invalid utxo
@@ -359,7 +326,7 @@ class HandleTxsTest(unittest.TestCase):
 
 
         self.assertTrue(is_block1_added, "Block1 with valid tx_v must be processed successfully")
-        self.assertEqual(blockchain.get_block_at_max_height().block, block1, "Block 1 should be added to the chain nd become the leader")
+        self.assertEqual(blockchain.get_block_at_max_height().block, block1, "Block 1 should be added to the chain and become the leader")
 
         utxo_pool = blockchain.get_utxo_pool_at_max_height()
         basic_utxo = UTXO(genesis_block.get_coinbase().get_hash(), 0)
@@ -367,7 +334,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertFalse(utxo_pool.contains(basic_utxo), "UTXO from Genesis was spent")
 
         for tx in [tx0, tx1, tx2, tx3, tx4]:
-            self.assertFalse(tx in blockchain.get_block_at_max_height().block.get_transactions(),  "tx can not be in the list of valid transactions")
+            self.assertFalse(tx in blockchain.get_block_at_max_height().block.get_transactions(),  "tx is invalid and can not be in the list of valid transactions")
 
     # 8
     def test_process_block_many_blocks_on_genesis(self):
@@ -685,9 +652,6 @@ class HandleTxsTest(unittest.TestCase):
         block_on_genesis = Block(genesis_block.get_hash(), alice.public_key)
         block_on_genesis.finalize()
 
-
-        print("HEIGHT GENESIS:", blockchain.newest_block_node.height)
-
         is_block1_added = handle_blocks.block_process(block1)
         is_block2_added = handle_blocks.block_process(block2)
         is_block3_added = handle_blocks.block_process(block3)
@@ -701,9 +665,6 @@ class HandleTxsTest(unittest.TestCase):
         is_block11_added = handle_blocks.block_process(block11)
         is_block12_added = handle_blocks.block_process(block12)
         is_block_on_genesis_added = handle_blocks.block_process(block_on_genesis)
-
-        print("HEIGHT FINAL:", blockchain.newest_block_node.height)
-
 
 
         self.assertTrue(is_block1_added, "Block1 without transaction was processed successfully")
@@ -1229,7 +1190,7 @@ class HandleTxsTest(unittest.TestCase):
         self.assertTrue(is_tx1_added, "Tx1 should be created successfully")
 
         self.assertEqual(blockchain.get_block_at_max_height().block, block1,"block1 must be the leader of the blockchain")
-        self.assertFalse(is_block2_added, "Block was not created because block has the invalid tx (Tx is valid but use the utxo from another branch)")
+        self.assertFalse(is_block2_added, "Block was not created because block has the invalid tx (Tx use the utxo from another branch)")
 
         self.assertIn(tx0, block1.get_transactions(), "tx0 must be included in block1")
 
@@ -1395,35 +1356,165 @@ class HandleTxsTest(unittest.TestCase):
     #Multisig
     # 1
     def test_create_multisig_address(self):
-        pool = UTXOPool()
-        all_txs = []
-
-        artem = RSAHelper()
         alice = RSAHelper()
         bob = RSAHelper()
         dima = RSAHelper()
+        artem = RSAHelper()
 
-        tx0 = Transaction()
-        tx0.add_output(20.0, artem.public_key)
-        tx0.finalize()
+        genesis_block = Block(None, bob.public_key)
+        genesis_block.finalize()
+        blockchain = Blockchain(genesis_block)
+        handle_blocks = HandleBlocks(blockchain)
 
-        utxo0 = UTXO(tx0.get_hash(), 0)
-        pool.add_utxo(utxo0, tx0.get_output(0))
 
         tx1 = Transaction()
-        tx1.add_input(tx0.get_hash(), 0)
-        tx1.add_output(20.0, multisig_keys = [alice.public_key, bob.public_key, dima.public_key], required=2)
+
+        tx1.add_input(genesis_block.get_coinbase().get_hash(), 0)
+        tx1.add_output(3.0, multisig_keys = [alice.public_key, artem.public_key, dima.public_key], required=2)
         data_to_sign = tx1.get_data_to_sign(0)
-        signature = alice.sign(data_to_sign)
+        signature = bob.sign(data_to_sign)
         tx1.add_signature(signature, 0)
         tx1.finalize()
 
-        self.assertIsNotNone(tx1.get_outputs()[0].address, "Tx0 must be created correctly")
-        self.assertTrue(tx1.get_outputs()[0].is_multisig, "Output created the multisig address")
+        is_tx1_added = blockchain.transaction_add(tx1)
+        block1 = handle_blocks.block_create(alice.public_key)
+
+
+
+
+        self.assertTrue(is_tx1_added, "Tx1 must be added into blockchain pool")
+        self.assertIsNotNone(block1, "Block1 must be created successfully")
+
+        self.assertTrue(tx1.get_outputs()[0].is_multisig, "Tx0 send data to multisig addres")
+        self.assertIsNotNone(tx1.get_outputs()[0].address, "Output created the multisig address")
         self.assertTrue(2 == tx1.get_outputs()[0].required, "Minimum number to assign is 2")
+
         self.assertTrue(alice.public_key in tx1.get_outputs()[0].multisig_keys, "alice is one of the member who need to write")
-        self.assertTrue(bob.public_key in tx1.get_outputs()[0].multisig_keys, "bob is one of the member who need to write")
+        self.assertTrue(artem.public_key in tx1.get_outputs()[0].multisig_keys, "bob is one of the member who need to write")
         self.assertTrue(dima.public_key in tx1.get_outputs()[0].multisig_keys, "dima is one of the member who need to write")
 
+    # 2
+    def test_multisig_tx_sign_by_one(self):
+        alice = RSAHelper()
+        bob = RSAHelper()
+        dima = RSAHelper()
+        artem = RSAHelper()
+
+        genesis_block = Block(None, bob.public_key)
+        genesis_block.finalize()
+        blockchain = Blockchain(genesis_block)
+        handle_blocks = HandleBlocks(blockchain)
+
+
+        tx1 = Transaction()
+
+        tx1.add_input(genesis_block.get_coinbase().get_hash(), 0)
+        tx1.add_output(3.0, multisig_keys = [alice.public_key, artem.public_key, dima.public_key], required=2)
+        data_to_sign = tx1.get_data_to_sign(0)
+        signature = bob.sign(data_to_sign)
+        tx1.add_signature(signature, 0)
+        tx1.finalize()
+
+        is_tx1_added = blockchain.transaction_add(tx1)
+        block1 = handle_blocks.block_create(alice.public_key)
+
+        tx2 = Transaction()
+
+        tx2.add_input(genesis_block.get_coinbase().get_hash(), 0)
+        tx2.add_output(3.0, bob.public_key)
+        data_to_sign = tx2.get_data_to_sign(0)
+        signature = alice.sign(data_to_sign)
+        tx2.add_signature(signature, 0)
+        tx2.finalize()
+
+        is_tx2_added = blockchain.transaction_add(tx2)
+        block2 = handle_blocks.block_create(bob.public_key)
+
+
+        self.assertTrue(is_tx1_added, "Tx1 must be added into blockchain pool")
+        self.assertFalse(is_tx2_added, "Tx2 can not be added, because tx is not valid, it is required minimum 2 signatures, 1 provided")
+
+        self.assertIsNotNone(block1, "Block1 must be created successfully")
+        self.assertIsNotNone(block2, "Block2 must be created successfully")
+
+        self.assertTrue(tx1.get_outputs()[0].is_multisig, "Tx0 send data to multisig addres")
+        self.assertIsNotNone(tx1.get_outputs()[0].address, "Output created the multisig address")
+        self.assertTrue(2 == tx1.get_outputs()[0].required, "Minimum number to assign is 2")
+
+        self.assertTrue(alice.public_key in tx1.get_outputs()[0].multisig_keys, "alice is one of the member who need to write")
+        self.assertTrue(artem.public_key in tx1.get_outputs()[0].multisig_keys, "bob is one of the member who need to write")
+        self.assertTrue(dima.public_key in tx1.get_outputs()[0].multisig_keys, "dima is one of the member who need to write")
+
+    # 3
+    def test_multisig_tx_sign_with_minimum_number_required(self):
+        alice = RSAHelper()
+        bob = RSAHelper()
+        dima = RSAHelper()
+        artem = RSAHelper()
+
+        genesis_block = Block(None, bob.public_key)
+        genesis_block.finalize()
+        blockchain = Blockchain(genesis_block)
+        handle_blocks = HandleBlocks(blockchain)
+
+
+        tx1 = Transaction()
+
+        tx1.add_input(genesis_block.get_coinbase().get_hash(), 0)
+        tx1.add_output(3.0, multisig_keys = [alice.public_key, artem.public_key, dima.public_key], required=2)
+        data_to_sign = tx1.get_data_to_sign(0)
+        signature = bob.sign(data_to_sign)
+        tx1.add_signature(signature, 0)
+        tx1.finalize()
+
+        is_tx1_added = blockchain.transaction_add(tx1)
+        block1 = handle_blocks.block_create(alice.public_key)
+
+        tx2 = Transaction()
+
+        tx2.add_input(tx1.get_hash(), 0)
+        tx2.add_output(3.0, bob.public_key)
+
+        data_to_sign = tx2.get_data_to_sign(0)
+        signature = alice.sign(data_to_sign)
+        tx2.add_signature(signature, 0)
+
+        data_to_sign = tx2.get_data_to_sign(0)
+        signature = artem.sign(data_to_sign)
+        tx2.add_signature(signature, 0)
+
+        tx2.finalize()
+
+        is_tx2_added = blockchain.transaction_add(tx2)
+
+        block2 = handle_blocks.block_create(bob.public_key)
+
+        utxo_pool = blockchain.get_utxo_pool_at_max_height()
+        spent_utxo = UTXO(tx1.get_hash(), 0)
+        new_utxo = UTXO(tx2.get_hash(), 0)
+
+
+        self.assertTrue(is_tx1_added, "Tx1 must be added into blockchain pool")
+        self.assertTrue(is_tx2_added, "Tx2 is valid, minimum required number of signatures (2) were provided")
+
+        self.assertIsNotNone(block1, "Block1 must be created successfully")
+        self.assertIsNotNone(block2, "Block2 must be created successfully")
+
+        self.assertIn(tx1, block1.get_transactions(), "Transaction1 must be in block1")
+        self.assertIn(tx2, block2.get_transactions(), "Transaction2 must be in block2")
+
+        self.assertTrue(tx1.get_outputs()[0].is_multisig, "Tx0 send data to multisig addres")
+        self.assertIsNotNone(tx1.get_outputs()[0].address, "Output created the multisig address")
+        self.assertTrue(2 == tx1.get_outputs()[0].required, "Minimum number to assign is 2")
+
+        self.assertTrue(alice.public_key in tx1.get_outputs()[0].multisig_keys, "alice is one of the member who need to write")
+        self.assertTrue(artem.public_key in tx1.get_outputs()[0].multisig_keys, "bob is one of the member who need to write")
+        self.assertTrue(dima.public_key in tx1.get_outputs()[0].multisig_keys, "dima is one of the member who need to write")
+
+        self.assertEqual(blockchain.get_block_at_max_height().block, block2, "Block must be the head of the blockchain")
+        self.assertIn(tx1, block1.get_transactions(), "Transaction must be in new block")
+        self.assertIn(tx2, block2.get_transactions(), "Transaction must be in new block")
+        self.assertFalse(utxo_pool.contains(spent_utxo), "UTXO which was used for multisig must be removed")
+        self.assertTrue(utxo_pool.contains(new_utxo), "New UTXO (from tx2) must be in new group")
 
 
