@@ -53,6 +53,9 @@ class Blockchain:
         # Implementation required
         return self.newest_block_node
 
+    def get_head_blocks(self):
+        return self.head_blocks
+
     """    /**
      * Získaj UTXOPool na ťaženie nového bloku na vrchu najvyššieho (max height)
      * bloku
@@ -99,7 +102,9 @@ class Blockchain:
             # get all txs of the block
             utxo_pool = parent_node.get_utxo_pool_copy()
             coinbase_tx = blockNode.block.get_coinbase()
-            block_txs = self.tx_pool_dict.get_transactions()
+            block_txs = self.get_transaction_pool().get_transactions()
+
+            appr_txs = [tx for tx in block_txs if HandleTxs.txIsValid(tx, self.utxo_pool, self.tx_pool_utxo)]
 
             block.txs.extend(block_txs)
             # process all txs, if txs is invalid then it will raise the error
@@ -115,8 +120,10 @@ class Blockchain:
                 self.blockchain_dict[block.get_hash()] = blockNode
 
                 self.head_blocks[block.get_hash()] = blockNode
+                print("WAS ADDED")
                 # del the prev block from the head of the branches
                 if parent_hash in self.head_blocks:
+                    print("WAS REMOVED")
                     del self.head_blocks[parent_hash]
 
                 # update the highest block
@@ -126,10 +133,11 @@ class Blockchain:
 
                 self.remove_confirmed_transactions(block_txs)
             else:
-                self.remove_confirmed_transactions(invalid_txs)
+                # self.remove_confirmed_transactions(invalid_txs)
                 print('Block had the invalid tx and was not added')
                 print('All valid tx go back to the pool')
                 print('Ivalid tx was removed from the pool')
+                return False
 
         except Exception as e:
             print(e)
@@ -192,4 +200,5 @@ class Blockchain:
 
     def remove_confirmed_transactions(self, block_txs):
         for tx in block_txs:
-            self.tx_pool_dict.remove_transaction(tx.get_hash())
+            if not HandleTxs.txIsValid(tx, self.utxo_pool, self.tx_pool_utxo):
+                self.tx_pool_dict.remove_transaction(tx.get_hash())

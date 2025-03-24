@@ -31,12 +31,13 @@ class Transaction:
     class Output:
         def __init__(self, value, addr, multisig_keys, required):
             self.value = value
-            self.is_multisig = False if multisig_keys is None else multisig_keys
+            self.is_multisig = False if multisig_keys is None else True
             self.multisig_keys = multisig_keys
             self.required = required
 
             if self.multisig_keys is not None and addr is None:
                 # self.address = self.serialize_key(self.create_multisig_addr())
+                print("IT IS MULTISIG, CREATE address")
                 self.address = self.create_multisig_addr()
             # elif addr is not None:
             #     print("SER")
