@@ -1516,5 +1516,3 @@ class HandleTxsTest(unittest.TestCase):
         self.assertIn(tx2, block2.get_transactions(), "Transaction must be in new block")
         self.assertFalse(utxo_pool.contains(spent_utxo), "UTXO which was used for multisig must be removed")
         self.assertTrue(utxo_pool.contains(new_utxo), "New UTXO (from tx2) must be in new group")
-
-

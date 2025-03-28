@@ -1,6 +1,7 @@
 import hashlib
 import struct
 from RSA import RSAHelper
+import datetime
 
 class Transaction:
 
@@ -47,13 +48,12 @@ class Transaction:
         def get_multisig_addr(self):
             return self.address
 
-        def serialize_key(self, address):
-            pem = RSAHelper.serialize_pb_key(address)
-            return pem
 
-        def deserialize_key(self, address):
-            key = RSAHelper.deserialize_pb_key(address)
-            return key
+        def get_value(self):
+            return self.value
+
+        def get_address(self):
+            return self.address
 
 
         def __eq__(self, other):
@@ -76,17 +76,21 @@ class Transaction:
             self.inputs = tx.inputs.copy()
             self.outputs = tx.outputs.copy()
             self.coinbase = False
+            self.time_created = tx.time_created
         elif coin is not None and address is not None:
             self.coinbase = True
             self.inputs = []
             self.outputs = []
             self.add_output(coin, address)
+            self.time_created = datetime.datetime.now()
             self.finalize()
         elif tx is None:
             self.inputs = []
             self.outputs = []
             self.coinbase = False
             self.hash = None
+            self.time_created = datetime.datetime.now()
+
 
     def is_coinbase(self):
         return self.coinbase
@@ -170,6 +174,8 @@ class Transaction:
         try:
             md = hashlib.sha256()
             md.update(self.get_tx())
+            md.update(str(self.time_created.timestamp()).encode())
+            print(hash(self.time_created))
             self.hash = md.digest()
         except Exception as e:
             print(e)
@@ -216,5 +222,7 @@ class Transaction:
 
         for i in range(self.num_outputs()):
             hash_code = hash_code * 31 + hash(self.outputs[i])
+
+        hash_code = hash_code * 31 + hash(self.time_created)
 
         return hash_code

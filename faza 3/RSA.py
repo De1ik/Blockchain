@@ -1,6 +1,28 @@
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
+import binascii
+
+
+def get_short_address(public_key, length=16):
+    # Сериализуем публичный ключ в байты (PEM-формат)
+    key_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    # Вычисляем SHA-256 хеш от сериализованных байтов
+    digest = hashes.Hash(hashes.SHA256())
+    digest.update(key_bytes)
+    key_hash = digest.finalize()
+
+    # Берем первые `length` символов в шестнадцатеричном представлении
+    short_address = binascii.hexlify(key_hash)[:length].decode("utf-8")
+    return short_address
+
+
+# Пример использования:
+# short_addr = get_short_address(alice.public_key)
+# print("Краткий адрес:", short_addr)
 
 
 class RSAHelper:
@@ -88,3 +110,16 @@ class RSAHelper:
 
         return valid_signatures >= required
 
+    @staticmethod
+    def get_short_address(public_key, length=16):
+        key_bytes = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+        digest = hashes.Hash(hashes.SHA256())
+        digest.update(key_bytes)
+        key_hash = digest.finalize()
+
+        short_address = binascii.hexlify(key_hash)[:length].decode("utf-8")
+        return short_address
