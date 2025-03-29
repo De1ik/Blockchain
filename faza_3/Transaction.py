@@ -175,7 +175,6 @@ class Transaction:
             md = hashlib.sha256()
             md.update(self.get_tx())
             md.update(str(self.time_created.timestamp()).encode())
-            print(hash(self.time_created))
             self.hash = md.digest()
         except Exception as e:
             print(e)
