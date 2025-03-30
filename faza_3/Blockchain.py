@@ -5,10 +5,7 @@ from TransactionPool import TransactionPool
 from UTXO import UTXO
 
 
-# Meno študenta:
-# Blockchain by mal na naplnenie funkcií udržiavať iba obmedzené množstvo uzlov
-# Nemali by ste mať všetky bloky pridané do blockchainu v pamäti
-# pretože by to mohlo spôsobiť pretečenie pamäte.
+# Artem Delikatnyi
 class Blockchain:
     CUT_OFF_AGE = 12
 
@@ -50,7 +47,6 @@ class Blockchain:
 
     """/** Získaj najvyšší (maximum height) blok */"""
     def get_block_at_max_height(self):
-        # Implementation required
         return self.newest_block_node
 
     def get_head_blocks(self):
@@ -61,12 +57,10 @@ class Blockchain:
      * bloku
      */"""
     def get_utxo_pool_at_max_height(self):
-        # Implementation required
         return self.utxo_pool
 
     """/** Získaj pool transakcií na vyťaženie nového bloku */"""
     def get_transaction_pool(self):
-        # Implementation required
         return self.tx_pool_dict
 
     """**
@@ -171,7 +165,6 @@ class Blockchain:
 
     """/** Pridaj transakciu do transakčného poolu */"""
     def transaction_add(self, tx):
-        # Implementation required
         if tx in self.tx_pool_dict.get_transactions():
             return False
 

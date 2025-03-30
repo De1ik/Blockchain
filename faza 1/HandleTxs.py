@@ -1,5 +1,3 @@
-from pyexpat.errors import messages
-
 import UTXOPool
 import UTXO
 from rsa.RSA import RSAHelper
@@ -25,7 +23,6 @@ class HandleTxs:
             return self.utxo_pool
         return UTXOPool.UTXOPool()
 
-
     def txIsValid(self, tx):
         # IMPLEMENTOVAŤ
         """
@@ -37,7 +34,6 @@ class HandleTxs:
         + (5) súčet vstupných hodnôt txs je väčší alebo rovný súčtu jej
         výstupných hodnôt; a false inak.
         """
-
         inp_val = 0
         op_val = 0
         used_utxos = []
@@ -69,7 +65,6 @@ class HandleTxs:
 
         if inp_val < op_val:
             return False
-
         return True
 
     def handler(self, possible_txs):

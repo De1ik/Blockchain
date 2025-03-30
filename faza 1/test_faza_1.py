@@ -766,7 +766,6 @@ class HandleTxsTest(unittest.TestCase):
 
         self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
         self.assertEqual(expected_valid_txs, received_valid_txs, "Check valid transaction by hash.")
-        self.assertEqual(len(expected_hashes), len(received_hashes), "List of transactions should be the same length.")
 
     # 15
     def test_tx_handler_valid_repeated_tx(self):

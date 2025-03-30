@@ -1,13 +1,18 @@
 from Node import Node
 from Transaction import Transaction
 
+# Artem Delikatnyi
 class TrustedNode(Node):
     def __init__(self, p_graph, p_byzantine, p_txDistribution, numRounds):
         self.followees = set()
         self.p_byzantine = p_byzantine
+        self.p_graph = p_graph
+        self.p_txDistribution = p_txDistribution
+
         # self.k = 2
         self.beta = 3 if numRounds >= 20 else 2
-        self.beta = self.beta + int(self.p_byzantine * 10)
+        self.beta = self.beta + int(self.p_byzantine * 10) + (2 if self.p_txDistribution > 0.5 else 0)
+        # self.beta = self.beta + int(self.p_byzantine * 10)
         self.tx_confidence = {}  # tx_id -> consecutive wins
         self.accepted = set()
         self.pending = set()
@@ -37,7 +42,9 @@ class TrustedNode(Node):
             self.observed.add(tx_id)
 
         honest_followees = int((1 - self.p_byzantine) * len(self.followees))
-        required_support = max(2, int(honest_followees * 0.5))
+        support_fraction = 0.6 if self.p_graph > 0.5 else 0.4
+        required_support = max(2, int(honest_followees * support_fraction))
+        # required_support = max(2, int(honest_followees * 0.5))
         # required_support = max(2, int(len(self.followees) * 0.4))
 
         for tx_id, count in vote_counts.items():
@@ -53,3 +60,5 @@ class TrustedNode(Node):
         for tx_id in vote_counts:
             if tx_id not in self.accepted:
                 self.pending.add(Transaction(tx_id))
+
+

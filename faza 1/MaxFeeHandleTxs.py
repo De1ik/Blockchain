@@ -23,7 +23,6 @@ class MaxFeeHandleTxs:
             return self.utxo_pool
         return UTXOPool.UTXOPool()
 
-
     def txIsValid(self, tx):
         # IMPLEMENTOVAŤ
         """
@@ -72,12 +71,6 @@ class MaxFeeHandleTxs:
 
     def handler(self, possible_txs):
         # IMPLEMENTOVAŤ
-        """
-        Spracováva každú epochu (iteráciu) prijímaním neusporiadaného radu navrhovaných
-        transakcií, kontroluje správnosť každej transakcie, vracia pole vzájomne
-        platných prijatých transakcií a aktualizuje aktuálny UTXO pool podľa potreby.
-        """
-
         valid_txs = {}
 
         for tx in possible_txs:

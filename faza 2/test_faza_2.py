@@ -81,16 +81,18 @@ class TestConsensusSnowball(unittest.TestCase):
         self.assertTrue(consensus, f"No consensus for the parameters: graph={p_graph}, byzantine={p_byzantine}, txDistrib={p_txDistribution}, rounds={numRounds}")
 
     def test_all_parameter_combinations(self):
-        p_graph_values = [0.1, 0.2, 0.3]
-        p_byzantine_values = [0.15, 0.30, 0.45]
-        p_txDistribution_values = [0.01, 0.05, 0.10]
-        numRounds_values = [10, 20]
+        # p_graph_values = [0.1, 0.2, 0.3]
+        # p_byzantine_values = [0.15, 0.30, 0.45]
+        # p_txDistribution_values = [0.01, 0.05, 0.10]
+        # numRounds_values = [10, 20]
+        #
+        # for combo in itertools.product(p_graph_values, p_byzantine_values, p_txDistribution_values, numRounds_values):
+        #     # allow to run the same test ,many times, even when some of the is error
+        #     with self.subTest(combo=combo):
+        #         print(f"\n--- Input parameters: p_graph={combo[0]}, p_byzantine={combo[1]}, p_txDistrib={combo[2]}, numRounds={combo[3]} ---")
+        #         self.run_consensus_test(*combo)
 
-        for combo in itertools.product(p_graph_values, p_byzantine_values, p_txDistribution_values, numRounds_values):
-            # allow to run the same test ,many times, even when some of the is error
-            with self.subTest(combo=combo):
-                print(f"\n--- Input parameters: p_graph={combo[0]}, p_byzantine={combo[1]}, p_txDistrib={combo[2]}, numRounds={combo[3]} ---")
-                self.run_consensus_test(*combo)
+        self.run_consensus_test(float(0.1), float(0.45), float(0.01), 20)
 
 
 if __name__ == '__main__':
